@@ -39,17 +39,6 @@ enum PostureState: String, Equatable {
     }
 
     var menuBarSystemImageName: String {
-        switch self {
-        case .unknown:
-            "airpodspro"
-        case .needsCalibration:
-            "target"
-        case .good:
-            "checkmark.circle"
-        case .warning:
-            "exclamationmark.triangle"
-        case .bad:
-            "exclamationmark.circle.fill"
-        }
+        "airpods.pro"
     }
 }

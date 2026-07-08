@@ -10,6 +10,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var viewModel: PostureViewModel
+    @State private var headerWiggleTrigger = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -68,17 +69,34 @@ struct MenuBarView: View {
         }
         .padding(16)
         .frame(width: 280, alignment: .topLeading)
+        .onChange(of: viewModel.postureState) { _, newValue in
+            if newValue == .bad {
+                headerWiggleTrigger &+= 1
+            }
+        }
     }
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image(systemName: viewModel.postureState.menuBarSystemImageName)
-                .font(.title2)
-                .foregroundStyle(statusColor)
-                .frame(width: 28)
+            Group {
+                if #available(macOS 15.0, *) {
+                    Image(systemName: viewModel.postureState.menuBarSystemImageName)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(statusColor, statusColor.opacity(0.55))
+                        .font(.title2)
+                        .frame(width: 28)
+                        .symbolEffect(.wiggle, value: headerWiggleTrigger)
+                } else {
+                    Image(systemName: viewModel.postureState.menuBarSystemImageName)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(statusColor, statusColor.opacity(0.55))
+                        .font(.title2)
+                        .frame(width: 28)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("PosturePods")
+                Text("Slouchless")
                     .font(.headline)
                 Text(viewModel.motionManager.isStreaming ? "Monitoring" : "Idle")
                     .font(.caption)
@@ -143,3 +161,4 @@ struct MenuBarView: View {
         return angle.formatted(.number.precision(.fractionLength(2))) + " deg"
     }
 }
+
