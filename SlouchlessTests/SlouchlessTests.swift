@@ -25,6 +25,7 @@ struct SlouchlessTests {
         #expect(analysis.postureState == PostureState.needsCalibration)
         #expect(analysis.pitchDelta == nil)
         #expect(analysis.rollDelta == nil)
+        #expect(analysis.postureProgress == nil)
     }
 
     @Test func analyzerWaitsForStableStateBeforePublishing() {
@@ -51,6 +52,7 @@ struct SlouchlessTests {
 
         #expect(analysis.pitchDelta == 3)
         #expect(analysis.rollDelta == 1.5)
+        #expect(analysis.postureProgress == 0.2)
         #expect(analysis.postureState == PostureState.good)
     }
 

@@ -13,6 +13,7 @@ final class PostureViewModel: ObservableObject {
     @Published private(set) var postureState: PostureState = .unknown
     @Published private(set) var pitchDelta: Double?
     @Published private(set) var rollDelta: Double?
+    @Published private(set) var postureProgress: Double?
     @Published private(set) var statusText = "Start motion updates and calibrate your good posture."
 
     let motionManager: AirPodsMotionManager
@@ -103,6 +104,7 @@ final class PostureViewModel: ObservableObject {
         postureState = analysis.postureState
         pitchDelta = analysis.pitchDelta
         rollDelta = analysis.rollDelta
+        postureProgress = analysis.postureProgress
         updateStatusText()
     }
 

@@ -12,6 +12,7 @@ struct PostureAnalysis: Equatable {
     let pitchDelta: Double?
     let rollDelta: Double?
     let yawDelta: Double?
+    let postureProgress: Double?
 }
 
 struct PostureAnalyzer {
@@ -132,7 +133,16 @@ struct PostureAnalyzer {
             postureState: publicState,
             pitchDelta: smoothedPitchDelta,
             rollDelta: smoothedRollDelta,
-            yawDelta: smoothedYawDelta
+            yawDelta: smoothedYawDelta,
+            postureProgress: progress(forPitchDelta: smoothedPitchDelta)
         )
+    }
+
+    private func progress(forPitchDelta pitchDelta: Double?) -> Double? {
+        guard let pitchDelta else {
+            return nil
+        }
+
+        return min(abs(pitchDelta) / badPitchThreshold, 1)
     }
 }

@@ -22,12 +22,32 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 14) {
-                statusRow("Posture", value: viewModel.postureState.title)
-                statusRow("Pitch Delta", value: formattedAngle(viewModel.pitchDelta))
-                statusRow("Roll Delta", value: formattedAngle(viewModel.rollDelta))
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(viewModel.postureState.displayTitle)
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(statusColor(for: viewModel.postureState))
+
+                    Spacer()
+
+                    Text(progressText(viewModel.postureProgress))
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+
+                PostureProgressBar(
+                    progress: viewModel.postureProgress ?? 0,
+                    state: viewModel.postureState
+                )
+
+                Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 10) {
+                    statusRow("Pitch Delta", value: formattedAngle(viewModel.pitchDelta))
+                    statusRow("Roll Delta", value: formattedAngle(viewModel.rollDelta))
+                }
+                .font(.system(.body, design: .monospaced))
             }
-            .font(.system(.body, design: .monospaced))
 
             Text(viewModel.statusText)
                 .foregroundStyle(statusColor(for: viewModel.postureState))
@@ -116,6 +136,14 @@ struct ContentView: View {
         return angle.formatted(.number.precision(.fractionLength(2))) + " deg"
     }
 
+    private func progressText(_ progress: Double?) -> String {
+        guard let progress else {
+            return "--"
+        }
+
+        return progress.formatted(.percent.precision(.fractionLength(0)))
+    }
+
     private func statusColor(for state: PostureState) -> Color {
         switch state {
         case .unknown, .needsCalibration:
@@ -127,6 +155,69 @@ struct ContentView: View {
         case .bad:
             .red
         }
+    }
+}
+
+private struct PostureProgressBar: View {
+    let progress: Double
+    let state: PostureState
+
+    private var clampedProgress: Double {
+        min(max(progress, 0), 1)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    HStack(spacing: 0) {
+                        Color.red.opacity(0.18)
+                            .frame(width: proxy.size.width * 7 / 15)
+                        Color.orange.opacity(0.18)
+                            .frame(width: proxy.size.width * 7 / 15)
+                        Color.green.opacity(0.18)
+                    }
+
+                    Capsule()
+                        .fill(progressColor)
+                        .frame(width: max(proxy.size.width * postureScore, 8))
+                }
+                .clipShape(Capsule())
+            }
+            .frame(height: 12)
+
+            HStack {
+                meterLabel("Bad", color: .red)
+                Spacer()
+                meterLabel("Okay", color: .orange)
+                Spacer()
+                meterLabel("Good", color: .green)
+            }
+        }
+    }
+
+    private var postureScore: Double {
+        1 - clampedProgress
+    }
+
+    private var progressColor: Color {
+        switch state {
+        case .unknown, .needsCalibration:
+            .secondary.opacity(0.55)
+        case .good:
+            .green
+        case .warning:
+            .orange
+        case .bad:
+            .red
+        }
+    }
+
+    private func meterLabel(_ label: String, color: Color) -> some View {
+        Text(label)
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundStyle(color)
     }
 }
 

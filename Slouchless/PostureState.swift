@@ -28,4 +28,13 @@ enum PostureState: String, Equatable {
             "Bad"
         }
     }
+
+    var displayTitle: String {
+        switch self {
+        case .warning:
+            "Okay"
+        default:
+            title
+        }
+    }
 }
