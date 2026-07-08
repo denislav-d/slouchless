@@ -5,55 +5,96 @@
 //  Created by Denislav Dimitrov on 8.07.26.
 //
 
+import CoreMotion
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @StateObject private var motionManager = AirPodsMotionManager()
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("AirPods Motion Debug")
+                    .font(.largeTitle)
+                    .fontWeight(.semibold)
+
+                Text("Connect compatible AirPods or headphones, then start motion updates to inspect live attitude values.")
+                    .foregroundStyle(.secondary)
             }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+
+            Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 14) {
+                statusRow("Motion", value: motionManager.isMotionAvailable ? "Available" : "Unavailable")
+                statusRow("Streaming", value: motionManager.isStreaming ? "Streaming" : "Stopped")
+
+                if let authorizationStatus = motionManager.authorizationStatus {
+                    statusRow("Authorization", value: authorizationStatus.description)
                 }
+
+                Divider()
+                    .gridCellUnsizedAxes(.horizontal)
+
+                statusRow("Pitch", value: formattedAngle(motionManager.latestPitch))
+                statusRow("Roll", value: formattedAngle(motionManager.latestRoll))
+                statusRow("Yaw", value: formattedAngle(motionManager.latestYaw))
             }
-        } detail: {
-            Text("Select an item")
+            .font(.system(.body, design: .monospaced))
+
+            if let errorMessage = motionManager.errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(.red)
+                    .textSelection(.enabled)
+            }
+
+            HStack(spacing: 12) {
+                Button("Start") {
+                    motionManager.startMotionUpdates()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(motionManager.isStreaming)
+
+                Button("Stop") {
+                    motionManager.stopMotionUpdates()
+                }
+                .disabled(!motionManager.isStreaming)
+            }
+
+            Spacer()
+        }
+        .padding(32)
+        .frame(minWidth: 520, minHeight: 420, alignment: .topLeading)
+    }
+
+    private func statusRow(_ label: String, value: String) -> some View {
+        GridRow {
+            Text(label)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .textSelection(.enabled)
         }
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+    private func formattedAngle(_ angle: Double?) -> String {
+        guard let angle else {
+            return "--"
         }
-    }
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+        return angle.formatted(.number.precision(.fractionLength(2))) + " deg"
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+private extension CMAuthorizationStatus {
+    var description: String {
+        switch self {
+        case .notDetermined:
+            "Not determined"
+        case .restricted:
+            "Restricted"
+        case .denied:
+            "Denied"
+        case .authorized:
+            "Authorized"
+        @unknown default:
+            "Unknown"
+        }
+    }
 }
