@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var motionManager = AirPodsMotionManager()
+    @StateObject private var calibrationManager = CalibrationManager()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -56,6 +57,30 @@ struct ContentView: View {
                     motionManager.stopMotionUpdates()
                 }
                 .disabled(!motionManager.isStreaming)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                Button(calibrationManager.isCalibrating ? "Calibrating..." : "Calibrate Good Posture") {
+                    calibrationManager.startCalibration(using: motionManager)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(calibrationManager.isCalibrating)
+
+                if calibrationManager.isCalibrating {
+                    Text("Calibrating...")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.orange)
+                }
+
+                if let profile = calibrationManager.currentProfile {
+                    Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 10) {
+                        statusRow("Baseline Pitch", value: formattedAngle(profile.baselinePitch))
+                        statusRow("Baseline Roll", value: formattedAngle(profile.baselineRoll))
+                        statusRow("Baseline Yaw", value: formattedAngle(profile.baselineYaw))
+                        statusRow("Calibrated", value: profile.createdAt.formatted(date: .abbreviated, time: .standard))
+                    }
+                    .font(.system(.body, design: .monospaced))
+                }
             }
 
             Spacer()
