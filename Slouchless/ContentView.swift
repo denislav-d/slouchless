@@ -9,38 +9,48 @@ import CoreMotion
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var motionManager = AirPodsMotionManager()
-    @StateObject private var calibrationManager = CalibrationManager()
+    @StateObject private var viewModel = PostureViewModel()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("AirPods Motion Debug")
+                Text("Slouchless")
                     .font(.largeTitle)
                     .fontWeight(.semibold)
 
-                Text("Connect compatible AirPods or headphones, then start motion updates to inspect live attitude values.")
+                Text("Connect compatible AirPods or headphones, calibrate your good posture, then watch live posture classification.")
                     .foregroundStyle(.secondary)
             }
 
             Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 14) {
-                statusRow("Motion", value: motionManager.isMotionAvailable ? "Available" : "Unavailable")
-                statusRow("Streaming", value: motionManager.isStreaming ? "Streaming" : "Stopped")
+                statusRow("Posture", value: viewModel.postureState.title)
+                statusRow("Pitch Delta", value: formattedAngle(viewModel.pitchDelta))
+                statusRow("Roll Delta", value: formattedAngle(viewModel.rollDelta))
+            }
+            .font(.system(.body, design: .monospaced))
 
-                if let authorizationStatus = motionManager.authorizationStatus {
+            Text(viewModel.statusText)
+                .foregroundStyle(statusColor(for: viewModel.postureState))
+                .textSelection(.enabled)
+
+            Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 14) {
+                statusRow("Motion", value: viewModel.motionManager.isMotionAvailable ? "Available" : "Unavailable")
+                statusRow("Streaming", value: viewModel.motionManager.isStreaming ? "Streaming" : "Stopped")
+
+                if let authorizationStatus = viewModel.motionManager.authorizationStatus {
                     statusRow("Authorization", value: authorizationStatus.description)
                 }
 
                 Divider()
                     .gridCellUnsizedAxes(.horizontal)
 
-                statusRow("Pitch", value: formattedAngle(motionManager.latestPitch))
-                statusRow("Roll", value: formattedAngle(motionManager.latestRoll))
-                statusRow("Yaw", value: formattedAngle(motionManager.latestYaw))
+                statusRow("Pitch", value: formattedAngle(viewModel.motionManager.latestPitch))
+                statusRow("Roll", value: formattedAngle(viewModel.motionManager.latestRoll))
+                statusRow("Yaw", value: formattedAngle(viewModel.motionManager.latestYaw))
             }
             .font(.system(.body, design: .monospaced))
 
-            if let errorMessage = motionManager.errorMessage {
+            if let errorMessage = viewModel.motionManager.errorMessage {
                 Text(errorMessage)
                     .foregroundStyle(.red)
                     .textSelection(.enabled)
@@ -48,31 +58,31 @@ struct ContentView: View {
 
             HStack(spacing: 12) {
                 Button("Start") {
-                    motionManager.startMotionUpdates()
+                    viewModel.startMotionUpdates()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(motionManager.isStreaming)
+                .disabled(viewModel.motionManager.isStreaming)
 
                 Button("Stop") {
-                    motionManager.stopMotionUpdates()
+                    viewModel.stopMotionUpdates()
                 }
-                .disabled(!motionManager.isStreaming)
+                .disabled(!viewModel.motionManager.isStreaming)
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Button(calibrationManager.isCalibrating ? "Calibrating..." : "Calibrate Good Posture") {
-                    calibrationManager.startCalibration(using: motionManager)
+                Button(viewModel.calibrationManager.isCalibrating ? "Calibrating..." : "Calibrate Good Posture") {
+                    viewModel.startCalibration()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(calibrationManager.isCalibrating)
+                .disabled(viewModel.calibrationManager.isCalibrating)
 
-                if calibrationManager.isCalibrating {
+                if viewModel.calibrationManager.isCalibrating {
                     Text("Calibrating...")
                         .fontWeight(.semibold)
                         .foregroundStyle(.orange)
                 }
 
-                if let profile = calibrationManager.currentProfile {
+                if let profile = viewModel.calibrationManager.currentProfile {
                     Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 10) {
                         statusRow("Baseline Pitch", value: formattedAngle(profile.baselinePitch))
                         statusRow("Baseline Roll", value: formattedAngle(profile.baselineRoll))
@@ -104,6 +114,19 @@ struct ContentView: View {
         }
 
         return angle.formatted(.number.precision(.fractionLength(2))) + " deg"
+    }
+
+    private func statusColor(for state: PostureState) -> Color {
+        switch state {
+        case .unknown, .needsCalibration:
+            .secondary
+        case .good:
+            .green
+        case .warning:
+            .orange
+        case .bad:
+            .red
+        }
     }
 }
 
