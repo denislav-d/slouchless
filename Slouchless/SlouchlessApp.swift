@@ -15,10 +15,6 @@ struct SlouchlessApp: App {
     var body: some Scene {
         MenuBarExtra {
             MenuBarView(viewModel: viewModel)
-            Divider()
-            Button("Test Wiggle") {
-                badPostureWiggleTrigger &+= 1
-            }
         } label: {
             menuBarIcon
         }
@@ -76,4 +72,3 @@ private extension PostureState {
         }
     }
 }
-
