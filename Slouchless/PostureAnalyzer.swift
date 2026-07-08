@@ -32,7 +32,7 @@ struct PostureAnalyzer {
         alpha: Double = 0.15,
         warningPitchThreshold: Double = 8,
         badPitchThreshold: Double = 15,
-        stabilizationDuration: TimeInterval = 2
+        stabilizationDuration: TimeInterval = 0.75
     ) {
         self.alpha = alpha
         self.warningPitchThreshold = warningPitchThreshold

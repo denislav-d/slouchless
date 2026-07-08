@@ -39,7 +39,8 @@ struct ContentView: View {
 
                 PostureProgressBar(
                     progress: viewModel.postureProgress ?? 0,
-                    state: viewModel.postureState
+                    state: viewModel.postureState,
+                    pitchDelta: viewModel.pitchDelta
                 )
 
                 Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 10) {
@@ -158,66 +159,70 @@ struct ContentView: View {
     }
 }
 
-private struct PostureProgressBar: View {
+struct PostureProgressBar: View {
     let progress: Double
     let state: PostureState
+    let pitchDelta: Double?
 
     private var clampedProgress: Double {
         min(max(progress, 0), 1)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Posture drift")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Text(driftText)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+
             GeometryReader { proxy in
+                let activeWidth = max(proxy.size.width * clampedProgress, 8)
+
                 ZStack(alignment: .leading) {
-                    HStack(spacing: 0) {
-                        Color.red.opacity(0.18)
-                            .frame(width: proxy.size.width * 7 / 15)
-                        Color.orange.opacity(0.18)
-                            .frame(width: proxy.size.width * 7 / 15)
-                        Color.green.opacity(0.18)
-                    }
+                    Capsule()
+                        .fill(.secondary.opacity(0.16))
+                        .frame(height: 10)
 
                     Capsule()
-                        .fill(progressColor)
-                        .frame(width: max(proxy.size.width * postureScore, 8))
+                        .fill(progressColor.gradient)
+                        .frame(width: activeWidth, height: 10)
+                        .animation(.easeOut(duration: 0.18), value: clampedProgress)
                 }
-                .clipShape(Capsule())
             }
-            .frame(height: 12)
-
-            HStack {
-                meterLabel("Bad", color: .red)
-                Spacer()
-                meterLabel("Okay", color: .orange)
-                Spacer()
-                meterLabel("Good", color: .green)
-            }
+            .frame(height: 10)
         }
-    }
-
-    private var postureScore: Double {
-        1 - clampedProgress
     }
 
     private var progressColor: Color {
         switch state {
         case .unknown, .needsCalibration:
-            .secondary.opacity(0.55)
+            .secondary
         case .good:
             .green
         case .warning:
-            .orange
+            .yellow
         case .bad:
             .red
         }
     }
 
-    private func meterLabel(_ label: String, color: Color) -> some View {
-        Text(label)
-            .font(.caption)
-            .fontWeight(.medium)
-            .foregroundStyle(color)
+    private var driftText: String {
+        guard let pitchDelta else {
+            return "--"
+        }
+
+        let magnitude = abs(pitchDelta).formatted(.number.precision(.fractionLength(0)))
+        return magnitude + " deg toward bad posture"
     }
 }
 

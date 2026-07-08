@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct SlouchlessApp: App {
+    @StateObject private var viewModel = PostureViewModel()
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        MenuBarExtra {
+            MenuBarView(viewModel: viewModel)
+        } label: {
+            Image(systemName: viewModel.postureState.menuBarSystemImageName)
         }
+        .menuBarExtraStyle(.window)
     }
 }

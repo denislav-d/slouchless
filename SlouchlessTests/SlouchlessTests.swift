@@ -34,8 +34,8 @@ struct SlouchlessTests {
         let start = Date()
 
         let first = analyzer.analyze(pitch: 20, roll: 0, yaw: 0, profile: profile, at: start)
-        let early = analyzer.analyze(pitch: 20, roll: 0, yaw: 0, profile: profile, at: start.addingTimeInterval(1.9))
-        let stable = analyzer.analyze(pitch: 20, roll: 0, yaw: 0, profile: profile, at: start.addingTimeInterval(2.0))
+        let early = analyzer.analyze(pitch: 20, roll: 0, yaw: 0, profile: profile, at: start.addingTimeInterval(0.7))
+        let stable = analyzer.analyze(pitch: 20, roll: 0, yaw: 0, profile: profile, at: start.addingTimeInterval(0.75))
 
         #expect(first.postureState == PostureState.unknown)
         #expect(early.postureState == PostureState.unknown)
