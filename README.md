@@ -10,6 +10,11 @@ Slouchless is a macOS menu bar app that helps you notice posture drift while wea
 - Shows live status from the menu bar
 - Sends a local notification after sustained bad posture
 
+## Preview
+<img width="283" height="459" alt="Screenshot 2026-09-20 at 01 10 03" src="https://github.com/user-attachments/assets/18bcfad7-b6c0-4751-9889-e3a8dece8f8a" />
+<img width="283" height="457" alt="Screenshot 2026-09-20 at 01 09 08" src="https://github.com/user-attachments/assets/ed9b77e0-0bc0-4b7c-9b30-7669887a0b42" />
+
+
 ## Project Map
 
 - `SlouchlessApp.swift` creates the menu bar app and status icon.
